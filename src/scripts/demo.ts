@@ -1,5 +1,3 @@
-import "dotenv/config"
-
 import {
     USE_LOCAL_ISSUER,
     ISSUER_SEED,

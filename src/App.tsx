@@ -126,7 +126,7 @@ export default function App() {
             {step === "setup" ? "셋업 중..." : step === "idle" ? "1. 새 데모 시작" : "다시 셋업"}
           </button>
 
-          {(step === "ready" || step === "done") && (
+          {(step === "ready" || step === "done" || step === "sending") && (
             <>
               <input
                 type="number"
@@ -144,11 +144,9 @@ export default function App() {
             </>
           )}
         </div>
-
-        {/* 흐름 시각화 */}
         {sender && (
           <div style={styles.flowSection}>
-            {/* 송금인 */}
+
             <div style={styles.senderCard}>
               <div style={styles.cardLabel}>송금인</div>
               <div style={styles.senderAddress}>{shortAddr(sender.address)}</div>

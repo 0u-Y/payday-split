@@ -6,7 +6,6 @@ import Send from "./pages/Send"
 import Execute from "./pages/Execute"
 import Recipient from "./pages/Recipient"
 import Dashboard from "./pages/Dashboard"
-import Demo from "./pages/Demo"
 import FamilyNew from "./pages/FamilyNew"
 
 export default function App() {
@@ -20,7 +19,6 @@ export default function App() {
             <Route path="/execute" element={<Execute />} />
             <Route path="/recipient/:addr" element={<Recipient />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/demo" element={<Demo />} />
             <Route path="/family/new" element={<FamilyNew />} />
           </Route>
         </Routes>

@@ -5,6 +5,10 @@ import { getFamilies, addTransaction } from "../services/storage"
 import { getClient } from "../xrpl/client"
 import { splitPayment, type PaymentResult } from "../xrpl/payment"
 import type { Family, TransactionRecord, PaymentRecordItem } from "../types"
+import { Avatar, Badge, Button, Card, Mono } from "../components/ui"
+import { FAMILY_PRESET } from "../lib/family"
+import { fmtKRW, shortAddr } from "../lib/format"
+import { EXPLORER_BASE } from "../config"
 
 type StepStatus = "pending" | "running" | "completed" | "failed"
 
@@ -13,6 +17,9 @@ type ExecuteState = {
   salaryKRW: number
   exchangeRate: number
 }
+
+const colorFor = (label: string) =>
+  FAMILY_PRESET.find((p) => p.label === label)?.color ?? "#1A2540"
 
 export default function Execute() {
   const navigate = useNavigate()
@@ -33,9 +40,7 @@ export default function Execute() {
 
   // state 없이 진입하면 /send로
   useEffect(() => {
-    if (!state) {
-      navigate("/send", { replace: true })
-    }
+    if (!state) navigate("/send", { replace: true })
   }, [state, navigate])
 
   // 송금 실행
@@ -63,28 +68,20 @@ export default function Execute() {
           sharePercent: f.sharePercent,
         }))
 
-        const results = await splitPayment(
-          client,
-          wallet,
-          recipients,
-          state.rlusdAmount,
-        )
+        const results = await splitPayment(client, wallet, recipients, state.rlusdAmount)
 
         setPaymentResults(results)
         const allSuccess = results.every((r) => r.status === "success")
         setStep2Status(allSuccess ? "completed" : "failed")
 
-        // 부분 실패 처리
         if (!allSuccess) {
           const failedCount = results.filter((r) => r.status === "failed").length
           const firstError =
             results.find((r) => r.status === "failed")?.error ?? "알 수 없는 에러"
-          setErrorMsg(
-            `${failedCount}/${results.length}건 송금 실패: ${firstError}`,
-          )
+          setErrorMsg(`${failedCount}/${results.length}건 송금 실패: ${firstError}`)
         }
 
-        // localStorage에 트랜잭션 기록
+        // localStorage 트랜잭션 기록
         const tx: TransactionRecord = {
           id: crypto.randomUUID(),
           totalAmountKRW: state.salaryKRW,
@@ -108,8 +105,8 @@ export default function Execute() {
         }
         addTransaction(tx)
 
-        // Step 3: 동남아 오프램프 Mock (성공 시에만)
         if (allSuccess) {
+          // Step 3: 동남아 오프램프 Mock
           setStep3Status("running")
           await sleep(1200)
           setStep3Status("completed")
@@ -125,9 +122,7 @@ export default function Execute() {
     })()
   }, [state, wallet])
 
-  if (!state) {
-    return null
-  }
+  if (!state) return null
 
   const allDone =
     step1Status === "completed" &&
@@ -139,91 +134,106 @@ export default function Execute() {
     step2Status === "failed" ||
     step3Status === "failed"
 
-  return (
-    <div className="max-w-3xl mx-auto px-6 py-12">
-      <h1 className="text-2xl font-bold mb-2">송금 실행</h1>
-      <p className="text-slate-400 mb-8">
-        {state.rlusdAmount.toFixed(2)} RLUSD를 가족 {families.length}명에게 분할
-        송금
-      </p>
+  let railProgressPct = 0
+  if (step1Status === "completed") railProgressPct = 33
+  if (step2Status === "completed") railProgressPct = 66
+  if (step3Status === "completed") railProgressPct = 100
 
-      <div className="space-y-4">
-        {/* Step 1: 한국 온램프 */}
-        <StepCard
-          step={1}
-          title="한국 온램프"
-          subtitle="토스뱅크 (Mock) · KRW → RLUSD"
-          status={step1Status}
-          detail={
-            step1Status === "completed"
-              ? `${state.salaryKRW.toLocaleString()} KRW → ${state.rlusdAmount.toFixed(2)} RLUSD`
-              : undefined
-          }
+  const railGradient = `linear-gradient(to bottom, var(--color-sage) 0%, var(--color-sage) ${railProgressPct}%, var(--color-line) ${railProgressPct}%)`
+
+  const subText = hasFailed
+    ? `${fmtKRW(state.salaryKRW)} → 가족 ${families.length}명 · 송금 실패`
+    : allDone
+      ? `${fmtKRW(state.salaryKRW)} → 가족 ${families.length}명 · 송금 완료`
+      : `${fmtKRW(state.salaryKRW)} → 가족 ${families.length}명 · 분할 송금 진행 중`
+
+  return (
+    <div className="px-14 py-8 max-w-[980px] mx-auto">
+      {/* Header */}
+      <div className="mb-6">
+        <Mono size={11} className="text-ink-mute tracking-[0.08em]">
+          STEP 02 · {hasFailed ? "실패" : allDone ? "완료" : "진행 중"}
+        </Mono>
+        <h2 className="text-[26px] font-bold mt-1 mb-1 tracking-[-0.02em]">송금 실행</h2>
+        <div className="text-[13px] text-ink-soft">{subText}</div>
+      </div>
+
+      {/* Timeline */}
+      <div className="relative pl-8">
+        {/* Vertical rail */}
+        <div
+          className="absolute left-4 top-7 bottom-7 w-0.5"
+          style={{ background: railGradient }}
         />
 
-        {/* Step 2: XRPL 분할 송금 */}
-        <StepCard
-          step={2}
-          title="XRPL 1:N 분할 송금"
-          subtitle="XRPL Testnet · 실제 트랜잭션"
-          status={step2Status}
+        <ExecStep
+          n={1}
+          status={step1Status}
+          title="한국 온램프"
+          sub="토스뱅크 (Mock) · KRW → RLUSD"
         >
-          {step2Status !== "pending" && (
-            <div className="mt-4 space-y-2">
+          <div className="flex gap-3">
+            <Pill label="월급" value={fmtKRW(state.salaryKRW)} />
+            <Pill label="환산" value={`${state.rlusdAmount.toFixed(2)} RLUSD`} mono />
+            <Pill label="환율" value={`1 USD = ₩${state.exchangeRate}`} />
+          </div>
+        </ExecStep>
+
+        <ExecStep
+          n={2}
+          status={step2Status}
+          title="XRPL 1:N 분할 송금"
+          sub="XRPL Testnet · 실제 트랜잭션"
+        >
+          {step2Status !== "pending" && families.length > 0 && (
+            <Card padded={false} className="mt-1 overflow-hidden">
               {families.map((f, i) => {
                 const result = paymentResults[i]
+                const amt = ((state.rlusdAmount * f.sharePercent) / 100).toFixed(2)
                 return (
                   <PaymentRow
                     key={f.id}
                     family={f}
                     result={result}
+                    amount={amt}
+                    isLast={i === families.length - 1}
                     isPending={!result && step2Status === "running"}
                   />
                 )
               })}
-            </div>
+            </Card>
           )}
-        </StepCard>
+        </ExecStep>
 
-        {/* Step 3: 동남아 오프램프 */}
-        <StepCard
-          step={3}
-          title="동남아 오프램프"
-          subtitle="현지 e-wallet (Mock) · RLUSD → VND"
+        <ExecStep
+          n={3}
           status={step3Status}
-          detail={
-            step3Status === "completed"
-              ? `가족 ${families.length}명의 e-wallet에 입금 완료`
-              : undefined
-          }
-        />
+          title="동남아 오프램프"
+          sub="현지 e-wallet (Mock) · RLUSD → VND"
+        >
+          <div className="text-xs text-ink-mute">
+            XRPL 분할 송금 완료 후 가족별 e-wallet으로 즉시 정산
+          </div>
+        </ExecStep>
       </div>
 
-      {/* 에러 박스 */}
+      {/* 실패 박스 */}
       {hasFailed && errorMsg && (
-        <div className="mt-6 p-5 bg-red-900/20 border border-red-700 rounded-lg">
+        <div className="mt-6 p-5 bg-red-soft border border-red rounded-[14px]">
           <div className="flex items-start gap-3">
-            <div className="w-7 h-7 bg-red-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
+            <div className="w-7 h-7 bg-red rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
               !
             </div>
             <div className="flex-1">
-              <div className="font-semibold text-red-400 mb-2">송금 실패</div>
-              <div className="text-sm text-slate-300 break-all mb-4">
-                {errorMsg}
-              </div>
+              <div className="font-bold text-red mb-2">송금 실패</div>
+              <div className="text-sm text-ink-soft break-all mb-4">{errorMsg}</div>
               <div className="flex gap-2">
-                <button
-                  onClick={() => navigate("/send")}
-                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-md text-sm transition"
-                >
+                <Button kind="secondary" size="sm" onClick={() => navigate("/send")}>
                   ← 송금 페이지로
-                </button>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-md text-sm transition"
-                >
+                </Button>
+                <Button kind="ink" size="sm" onClick={() => window.location.reload()}>
                   다시 시도
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -232,33 +242,36 @@ export default function Execute() {
 
       {/* 완료 박스 */}
       {allDone && (
-        <div className="mt-8 p-6 bg-green-900/20 border border-green-700 rounded-lg">
+        <div className="mt-8 p-6 bg-sage-soft border border-sage rounded-[14px]">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-xl">
+            <div className="w-10 h-10 bg-sage rounded-full flex items-center justify-center text-white text-xl font-bold">
               ✓
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-green-400">
-                송금 완료
-              </h2>
-              <p className="text-sm text-slate-400">
-                총 {state.rlusdAmount.toFixed(2)} RLUSD가 분할 송금되었습니다
+              <h2 className="text-lg font-bold text-sage">송금 완료</h2>
+              <p className="text-sm text-ink-soft">
+                총 {state.rlusdAmount.toFixed(2)} RLUSD가 가족 {families.length}명에게
+                분할 송금되었습니다
               </p>
             </div>
           </div>
           <div className="flex gap-3">
-            <button
+            <Button
+              kind="coral"
+              size="md"
+              className="flex-1"
               onClick={() => navigate("/dashboard")}
-              className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-md text-sm font-medium transition"
             >
               대시보드 →
-            </button>
-            <button
+            </Button>
+            <Button
+              kind="secondary"
+              size="md"
+              className="flex-1"
               onClick={() => navigate("/send")}
-              className="flex-1 py-2.5 bg-slate-700 hover:bg-slate-600 rounded-md text-sm font-medium transition"
             >
               다시 송금
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -266,65 +279,78 @@ export default function Execute() {
   )
 }
 
-// =========================================
-// 컴포넌트들
-// =========================================
-
-function StepCard({
-  step,
-  title,
-  subtitle,
+function ExecStep({
+  n,
   status,
-  detail,
+  title,
+  sub,
   children,
 }: {
-  step: number
-  title: string
-  subtitle: string
+  n: number
   status: StepStatus
-  detail?: string
+  title: string
+  sub: string
   children?: React.ReactNode
 }) {
-  const borderColor = {
-    pending: "border-slate-700",
-    running: "border-indigo-500",
-    completed: "border-green-600",
-    failed: "border-red-600",
+  const dotBg = {
+    pending: "bg-ink-faint",
+    running: "bg-coral",
+    completed: "bg-sage",
+    failed: "bg-red",
   }[status]
 
-  const indicator = {
-    pending: (
-      <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-xs text-slate-400">
-        {step}
-      </div>
-    ),
-    running: (
-      <div className="w-6 h-6 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
-    ),
-    completed: (
-      <div className="w-6 h-6 rounded-full bg-green-600 flex items-center justify-center text-xs">
-        ✓
-      </div>
-    ),
-    failed: (
-      <div className="w-6 h-6 rounded-full bg-red-600 flex items-center justify-center text-xs">
-        ✗
-      </div>
-    ),
+  const badgeKind = ({
+    pending: "neutral",
+    running: "coral",
+    completed: "sage",
+    failed: "red",
+  } as const)[status]
+
+  const badgeText = {
+    pending: "대기",
+    running: "진행 중",
+    completed: "완료",
+    failed: "실패",
   }[status]
 
   return (
-    <div
-      className={`p-5 bg-slate-800 border-2 ${borderColor} rounded-lg transition-colors`}
-    >
-      <div className="flex items-start gap-3">
-        {indicator}
-        <div className="flex-1">
-          <div className="font-semibold">{title}</div>
-          <div className="text-sm text-slate-400 mt-0.5">{subtitle}</div>
-          {detail && <div className="text-sm text-slate-300 mt-2">{detail}</div>}
-          {children}
+    <div className="relative pb-5">
+      {/* Node dot */}
+      <div
+        className={`absolute w-[18px] h-[18px] rounded-full flex items-center justify-center text-white text-[9px] font-bold border-4 border-bg ${dotBg}`}
+        style={{ left: -24, top: 0 }}
+      >
+        {status === "completed" ? "✓" : status === "failed" ? "✗" : n}
+      </div>
+      <Card padded={false} className="p-[18px]">
+        <div className="mb-3">
+          <div className="flex items-center gap-2.5">
+            <span className="text-base font-bold">{title}</span>
+            <Badge kind={badgeKind}>
+              {status === "running" && (
+                <span className="w-1.5 h-1.5 rounded-full bg-coral animate-pulse-dot" />
+              )}
+              {badgeText}
+            </Badge>
+          </div>
+          <div className="text-xs text-ink-mute mt-0.5">{sub}</div>
         </div>
+        {children}
+      </Card>
+    </div>
+  )
+}
+
+function Pill({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="flex-1 px-3 py-2.5 bg-bg rounded-[10px]">
+      <div className="text-[10px] text-ink-mute font-bold tracking-[0.04em] mb-0.5">
+        {label}
+      </div>
+      <div
+        className={`text-sm font-bold tabular-nums ${mono ? "font-mono" : "font-kr"}`}
+      >
+        {value}
       </div>
     </div>
   )
@@ -333,54 +359,55 @@ function StepCard({
 function PaymentRow({
   family,
   result,
+  amount,
+  isLast,
   isPending,
 }: {
   family: Family
   result?: PaymentResult
+  amount: string
+  isLast: boolean
   isPending: boolean
 }) {
+  const color = colorFor(family.label)
   return (
-    <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-md text-sm">
-      <div className="flex items-center gap-3">
-        {isPending && !result ? (
-          <div className="w-4 h-4 rounded-full border-2 border-slate-500 border-t-transparent animate-spin" />
-        ) : result?.status === "success" ? (
-          <div className="w-4 h-4 rounded-full bg-green-600 flex items-center justify-center text-[10px]">
-            ✓
-          </div>
-        ) : result?.status === "failed" ? (
-          <div className="w-4 h-4 rounded-full bg-red-600 flex items-center justify-center text-[10px]">
-            ✗
-          </div>
-        ) : (
-          <div className="w-4 h-4 rounded-full bg-slate-700" />
-        )}
-        <div>
-          <span className="font-medium">{family.label}</span>
-          <span className="text-slate-500 ml-2">{family.sharePercent}%</span>
+    <div
+      className={`flex items-center gap-3 px-4 py-2.5 ${
+        isLast ? "" : "border-b border-line-soft"
+      }`}
+    >
+      <Avatar name={family.label} size={28} color={color} />
+      <div className="flex-1">
+        <div className="text-[13px] font-semibold">
+          {family.label}{" "}
+          <span className="text-ink-mute font-medium">· {family.sharePercent}%</span>
         </div>
+        <Mono size={10} className="text-ink-mute">
+          {shortAddr(family.walletAddress)}
+        </Mono>
       </div>
-      <div className="flex items-center gap-3">
-        {result && (
-          <span className="font-mono">{Number(result.amount).toFixed(2)} RLUSD</span>
-        )}
-        {result?.txHash && (
+      <Mono size={13} className="font-bold w-20 text-right">
+        {amount}
+      </Mono>
+      <div className="w-[130px] text-right">
+        {result?.status === "success" && result.txHash ? (
           <a
-            href={`https://testnet.xrpl.org/transactions/${result.txHash}`}
+            href={`${EXPLORER_BASE}/transactions/${result.txHash}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-indigo-400 hover:text-indigo-300 text-xs"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sage-soft text-sage font-mono text-[11px] font-bold no-underline"
           >
-            Explorer ↗
+            {result.txHash.slice(0, 12)} ↗
           </a>
-        )}
-        {result?.status === "failed" && result.error && (
-          <span
-            className="text-red-400 text-xs truncate max-w-[200px]"
-            title={result.error}
-          >
-            {result.error}
-          </span>
+        ) : result?.status === "failed" ? (
+          <Badge kind="red">실패</Badge>
+        ) : isPending ? (
+          <Badge kind="amber">
+            <span className="inline-block w-3 h-3 rounded-full border-2 border-amber/30 border-t-amber animate-spin" />
+            전송 중
+          </Badge>
+        ) : (
+          <Badge kind="neutral">대기</Badge>
         )}
       </div>
     </div>

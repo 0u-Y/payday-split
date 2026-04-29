@@ -1,9 +1,68 @@
 @import "tailwindcss";
 
-@layer base {
-  body {
-    @apply bg-slate-900 text-slate-100;
-    font-family: system-ui, -apple-system, sans-serif;
-    margin: 0;
-  }
+@theme {
+  /* Surfaces */
+  --color-bg: #FCFAF8;
+  --color-bg-raised: #FFFFFF;
+  --color-bg-sunken: #F5F1EC;
+
+  /* Ink (text/data) */
+  --color-ink: #1A2540;
+  --color-ink-soft: #4A5570;
+  --color-ink-mute: #8A8E99;
+  --color-ink-faint: #C4C7CE;
+
+  /* Lines */
+  --color-line: #EDE7DF;
+  --color-line-soft: #F4EFE7;
+
+  /* Coral — primary */
+  --color-coral: #E86A4D;
+  --color-coral-dark: #C4513A;
+  --color-coral-soft: #FBE5DC;
+  --color-coral-faint: #FDF1EB;
+
+  /* Sage — savings/positive */
+  --color-sage: #3F8A6E;
+  --color-sage-soft: #DFEDE5;
+
+  /* Amber */
+  --color-amber: #D69431;
+  --color-amber-soft: #F8EBC8;
+
+  /* Red */
+  --color-red: #C8412E;
+  --color-red-soft: #F7DCD4;
+
+  /* Fonts */
+  --font-kr: "Pretendard Variable", "Pretendard", -apple-system, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 0 rgba(15, 31, 61, 0.04), 0 4px 14px rgba(15, 31, 61, 0.04);
+  --shadow-lift: 0 1px 0 rgba(15, 31, 61, 0.06), 0 8px 28px rgba(15, 31, 61, 0.08);
+}
+
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap");
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-kr);
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 1s ease-in-out infinite;
 }

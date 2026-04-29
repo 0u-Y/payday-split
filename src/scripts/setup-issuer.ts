@@ -27,7 +27,7 @@ const txResult =
     : "unknown"
 console.log("Result:", txResult)
 
-console.log("\n👉 이 주소를 config.ts의 RLUSD_ISSUER로 박기")
+console.log("\n이 주소를 config.ts의 RLUSD_ISSUER로 박기")
 console.log("   이 시드를 .env의 ISSUER_SEED로 저장")
 
 await client.disconnect()

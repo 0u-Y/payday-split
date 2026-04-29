@@ -199,7 +199,15 @@ export default function Send() {
         <Card padded={false}>
           <div className="px-5 py-3.5 border-b border-line-soft flex justify-between items-center">
             <div className="text-sm font-bold">가족 4명 · 비율 분할</div>
-            <Badge kind={Math.abs(totalShare - 100) < 0.01 ? "sage" : "amber"}>
+            <Badge
+              kind={
+                Math.abs(totalShare - 100) < 0.01
+                  ? "sage"
+                  : totalShare > 100
+                    ? "red"
+                    : "amber"
+              }
+            >
               합계 {totalShare}%
             </Badge>
           </div>
@@ -208,61 +216,30 @@ export default function Send() {
               가족 정보 불러오는 중…
             </div>
           ) : (
-            families.map((f, i) => {
-              const amt = (rlusd * f.sharePercent) / 100
-              const color = colorFor(f.label)
-              return (
-                <div
-                  key={f.id}
-                  className={`px-5 py-3 flex items-center gap-3.5 ${
-                    i < families.length - 1 ? "border-b border-line-soft" : ""
-                  }`}
-                >
-                  <Avatar name={f.label} size={36} color={color} />
-                  <div className="flex-1">
-                    <div className="text-sm font-semibold">{f.label}</div>
-                    <div className="text-[11px] text-ink-mute flex items-center gap-1.5 mt-0.5">
-                      <FlagChip code={f.country} size={12} />
-                      <Mono size={11}>{shortAddr(f.walletAddress)}</Mono>
-                    </div>
-                  </div>
-                  <div className="w-[140px]">
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      value={f.sharePercent}
-                      onChange={(e) =>
-                        updateShare(f.id, parseInt(e.target.value, 10))
-                      }
-                      className="w-full h-1 rounded-[2px] appearance-none bg-bg-sunken cursor-pointer accent-coral"
-                      style={{
-                        background: `linear-gradient(to right, ${color} 0%, ${color} ${f.sharePercent}%, var(--color-bg-sunken) ${f.sharePercent}%, var(--color-bg-sunken) 100%)`,
-                      }}
-                    />
-                  </div>
-                  <div className="w-[60px] text-right flex items-baseline justify-end gap-0.5">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={f.sharePercent}
-                      onChange={(e) => {
-                        const digits = e.target.value.replace(/[^0-9]/g, "")
-                        updateShare(f.id, digits === "" ? 0 : parseInt(digits, 10))
-                      }}
-                      className="w-9 text-right text-sm font-bold tabular-nums bg-transparent border-0 outline-none rounded px-1 hover:bg-bg-sunken focus:bg-bg-sunken font-kr"
-                    />
-                    <span className="text-sm font-bold">%</span>
-                  </div>
-                  <div className="w-[90px] text-right">
-                    <Mono size={13} className="font-bold">
-                      {amt.toFixed(2)}
-                    </Mono>
-                    <div className="text-[10px] text-ink-mute font-semibold">RLUSD</div>
-                  </div>
-                </div>
-              )
-            })
+            families.map((f, i) => (
+              <FamilyRow
+                key={f.id}
+                family={f}
+                rlusd={rlusd}
+                color={colorFor(f.label)}
+                isLast={i === families.length - 1}
+                onChange={(target) => updateShare(f.id, target)}
+              />
+            ))
+          )}
+          {families.length > 0 && Math.abs(totalShare - 100) >= 0.01 && (
+            <div
+              className={`px-5 py-3 border-t border-line-soft text-xs font-semibold flex items-center gap-2 ${
+                totalShare > 100
+                  ? "bg-red-soft text-red"
+                  : "bg-amber-soft text-amber-dark"
+              }`}
+            >
+              <span className="text-base leading-none">⚠</span>
+              {totalShare > 100
+                ? `합계가 100%를 ${totalShare - 100}% 초과했습니다. 비율을 줄여주세요.`
+                : `합계가 100%에서 ${100 - totalShare}% 부족합니다.`}
+            </div>
           )}
         </Card>
       </div>
@@ -324,6 +301,79 @@ export default function Send() {
             승인 시 1회 서명으로 4건 처리
           </div>
         </Card>
+      </div>
+    </div>
+  )
+}
+
+function FamilyRow({
+  family,
+  rlusd,
+  color,
+  isLast,
+  onChange,
+}: {
+  family: Family
+  rlusd: number
+  color: string
+  isLast: boolean
+  onChange: (target: number) => void
+}) {
+  const amt = (rlusd * family.sharePercent) / 100
+
+  return (
+    <div
+      className={`px-5 py-3 flex items-center gap-3.5 ${
+        !isLast ? "border-b border-line-soft" : ""
+      }`}
+    >
+      <Avatar name={family.label} size={36} color={color} />
+      <div className="flex-1">
+        <div className="text-sm font-semibold">{family.label}</div>
+        <div className="text-[11px] text-ink-mute flex items-center gap-1.5 mt-0.5">
+          <FlagChip code={family.country} size={12} />
+          <Mono size={11}>{shortAddr(family.walletAddress)}</Mono>
+        </div>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => onChange(family.sharePercent - 1)}
+          disabled={family.sharePercent <= 0}
+          className="w-7 h-7 rounded-md border border-line text-sm font-bold text-ink-soft hover:bg-bg-sunken disabled:opacity-30 disabled:cursor-not-allowed"
+          aria-label="감소"
+        >
+          −
+        </button>
+        <div className="flex items-baseline gap-0.5 px-2.5 h-7 border border-line rounded-md bg-bg-raised w-[68px] focus-within:border-coral">
+          <input
+            type="text"
+            inputMode="numeric"
+            value={family.sharePercent}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/[^0-9]/g, "")
+              onChange(digits === "" ? 0 : parseInt(digits, 10))
+            }}
+            className="flex-1 min-w-0 text-right text-sm font-bold tabular-nums bg-transparent border-0 outline-none font-kr"
+            style={{ color }}
+          />
+          <span className="text-sm font-bold text-ink-mute">%</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => onChange(family.sharePercent + 1)}
+          disabled={family.sharePercent >= 100}
+          className="w-7 h-7 rounded-md border border-line text-sm font-bold text-ink-soft hover:bg-bg-sunken disabled:opacity-30 disabled:cursor-not-allowed"
+          aria-label="증가"
+        >
+          +
+        </button>
+      </div>
+      <div className="w-[90px] text-right">
+        <Mono size={13} className="font-bold">
+          {amt.toFixed(2)}
+        </Mono>
+        <div className="text-[10px] text-ink-mute font-semibold">RLUSD</div>
       </div>
     </div>
   )

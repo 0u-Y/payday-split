@@ -14,7 +14,7 @@ console.log("\nDefaultRipple 플래그 활성화 중...")
 const tx = {
   TransactionType: "AccountSet" as const,
   Account: issuer.address,
-  SetFlag: 8,  // asfDefaultRipple
+  SetFlag: 8,
 }
 const prepared = await client.autofill(tx)
 const signed = issuer.sign(prepared)

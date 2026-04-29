@@ -18,7 +18,7 @@ const PRESET_FAMILIES = [
   { label: "여동생", country: "VN", sharePercent: 15 },
 ]
 
-const EXCHANGE_RATE = 1358
+const EXCHANGE_RATE = 1458
 const SWIFT_SAVINGS_KRW = 117_600
 const MIN_RLUSD = 1
 

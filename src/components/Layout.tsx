@@ -16,14 +16,7 @@ const MIN_BALANCE = 1
 
 function Logo() {
   return (
-    <Link to="/" className="flex items-center gap-2 no-underline text-ink">
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-        <circle cx="11" cy="11" r="10" stroke="var(--color-ink)" strokeWidth="1.5" />
-        <path d="M11 1 V21" stroke="var(--color-ink)" strokeWidth="1.5" />
-        <path d="M11 11 L19 7" stroke="var(--color-coral)" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M11 11 L19 15" stroke="var(--color-coral)" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M11 11 L3 11" stroke="var(--color-coral)" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
+    <Link to="/" className="no-underline text-ink">
       <span className="font-bold text-base tracking-tight font-kr">Payday Split</span>
     </Link>
   )

@@ -62,24 +62,22 @@ export async function setupSister(): Promise<void> {
   }
 }
 
-if (import.meta.env.DEV && typeof window !== "undefined") {
-  ;(
-    window as unknown as {
-      resetAllData: typeof resetAllData
-      setupSister: typeof setupSister
-    }
-  ).resetAllData = resetAllData
-  ;(
-    window as unknown as {
-      resetAllData: typeof resetAllData
-      setupSister: typeof setupSister
-    }
-  ).setupSister = setupSister
+;(
+  window as unknown as {
+    resetAllData: typeof resetAllData
+    setupSister: typeof setupSister
+  }
+).resetAllData = resetAllData
+;(
+  window as unknown as {
+    resetAllData: typeof resetAllData
+    setupSister: typeof setupSister
+  }
+).setupSister = setupSister
 
-  console.log(
-    "[devtools] window.resetAllData() — localStorage 초기화 + 페이지 새로고침",
-  )
-  console.log(
-    "[devtools] window.setupSister() — 여동생 지갑 활성화 + RLUSD Trust Line 설정 (멱등)",
-  )
-}
+console.log(
+  "[devtools] window.resetAllData() — localStorage 초기화 + 페이지 새로고침",
+)
+console.log(
+  "[devtools] window.setupSister() — 여동생 지갑 활성화 + RLUSD Trust Line 설정 (멱등)",
+)

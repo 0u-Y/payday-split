@@ -1,17 +1,26 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import { createContext, useContext, useState, type ReactNode } from "react"
 import { Wallet } from "xrpl"
-import { getSender, setSender } from "../services/storage"
-import { walletFromSeed, createFundedWallet } from "../xrpl/wallet"
-import { setRLUSDTrustLine } from "../xrpl/trustline"
-import { issueToken } from "../xrpl/issue"
-import { getClient } from "../xrpl/client"
-import { ISSUER_SEED, USE_LOCAL_ISSUER } from "../config"
+import {
+  getSender,
+  setSender,
+  getFamilies,
+  addFamily,
+  getTransactions,
+  addTransaction,
+} from "../services/storage"
+import { walletFromSeed } from "../xrpl/wallet"
+import {
+  PRESEEDED_SENDER,
+  PRESEEDED_FAMILY_REGISTERED,
+  PRESEEDED_TRANSACTIONS,
+  toFamily,
+} from "../data/preseeded"
 
 type SenderContextValue = {
   wallet: Wallet | null      // 시그널: 트랜잭션 서명용
   address: string | null     // UI 표시용
   isReady: boolean           // 셋업 완료 여부
-  isFirstTime: boolean       // 첫 방문 여부 (셋업 화면 표시용)
+  isFirstTime: boolean       // 첫 방문 여부
 }
 
 const SenderContext = createContext<SenderContextValue>({
@@ -21,52 +30,52 @@ const SenderContext = createContext<SenderContextValue>({
   isFirstTime: false,
 })
 
-export function SenderProvider({ children }: { children: ReactNode }) {
-  // localStorage에서 즉시 가져옴 (동기, 0ms)
-  const stored = getSender()
-  const [wallet, setWallet] = useState<Wallet | null>(
-    stored ? walletFromSeed(stored.walletSeed) : null,
-  )
-  const [isReady, setIsReady] = useState(!!stored)
-  const isFirstTime = !stored
+// 첫 진입이면 사전 셋업 데이터를 localStorage에 즉시 박는다.
+// "이미 가입한 사용자가 다시 로그인" 시뮬레이션 — 셋업 대기 0초.
+function ensurePreseeded(): { wallet: Wallet; isFirstTime: boolean } {
+  let stored = getSender()
+  let isFirstTime = false
 
-  useEffect(() => {
-    if (stored) return // 이미 있으면 셋업 안 함
+  if (!stored) {
+    isFirstTime = true
 
-    // 첫 방문 - 백그라운드로 셋업
-    ;(async () => {
-      const client = await getClient()
-      try {
-        const newWallet = await createFundedWallet(client)
-        await setRLUSDTrustLine(client, newWallet)
+    setSender({
+      walletAddress: PRESEEDED_SENDER.address,
+      walletSeed: PRESEEDED_SENDER.seed,
+      createdAt: Date.now(),
+    })
 
-        if (USE_LOCAL_ISSUER) {
-          const issuer = walletFromSeed(ISSUER_SEED)
-          await issueToken(client, issuer, newWallet.address, "5000")
-        }
-
-        setSender({
-          walletAddress: newWallet.address,
-          walletSeed: newWallet.seed!,
-          createdAt: Date.now(),
-        })
-
-        setWallet(newWallet)
-        setIsReady(true)
-      } catch (err) {
-        console.error("송금인 셋업 실패:", err)
-      } finally {
-        await client.disconnect()
+    if (getFamilies().length === 0) {
+      for (const p of PRESEEDED_FAMILY_REGISTERED) {
+        addFamily(toFamily(p))
       }
-    })()
-  }, [])
+    }
+
+    if (getTransactions().length === 0) {
+      // addTransaction은 unshift라서 최신이 [0]. oldest부터 add해야 newest first 정렬 유지.
+      for (const tx of PRESEEDED_TRANSACTIONS) {
+        addTransaction(tx)
+      }
+    }
+
+    stored = getSender()!
+  }
+
+  return {
+    wallet: walletFromSeed(stored.walletSeed),
+    isFirstTime,
+  }
+}
+
+export function SenderProvider({ children }: { children: ReactNode }) {
+  const [{ wallet, isFirstTime }] = useState(() => ensurePreseeded())
 
   return (
     <SenderContext.Provider
       value={{
         wallet,
-        address: wallet?.address ?? null,
-        isReady,
+        address: wallet.address,
+        isReady: true,
         isFirstTime,
       }}
     >

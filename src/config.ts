@@ -5,6 +5,7 @@ export const TESTNET_URL = "wss://s.altnet.rippletest.net:51233"
 export const RLUSD_CURRENCY = "524C555344000000000000000000000000000000"
 export const TRUST_LINE_LIMIT = "1000000"
 export const EXPLORER_BASE = "https://testnet.xrpl.org"
+export const EXCHANGE_RATE_KRW_USD = 1458
 
 
 

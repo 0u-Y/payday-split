@@ -32,9 +32,9 @@ export async function getRLUSDBalance(
 
 /**
  * 지정 계정이 RLUSD Trust Line을 갖고 있는지 확인
- * @param client 
- * @param address 
- * @returns 
+ * @param client
+ * @param address
+ * @returns
  */
 export async function hasRLUSDTrustLine(
     client: Client,
@@ -47,7 +47,41 @@ export async function hasRLUSDTrustLine(
     })
 
     return response.result.lines.some(
-        (line) => 
+        (line) =>
             line.currency === RLUSD_CURRENCY && line.account === RLUSD_ISSUER,
     )
+}
+
+
+
+/**
+ * 가족 등록 흐름용 Trust Line 검증
+ * - exists: Trust Line 존재 여부
+ * - message: UI 표시용 메시지 (성공/실패 사유)
+ */
+export async function verifyRLUSDTrustLine(
+    client: Client,
+    address: string,
+): Promise<{ exists: boolean; message: string }> {
+    try {
+        const exists = await hasRLUSDTrustLine(client, address)
+        return {
+            exists,
+            message: exists
+                ? "RLUSD Trust Line 확인됨"
+                : "이 주소는 RLUSD Trust Line이 없습니다",
+        }
+    } catch (err) {
+        const errMsg = err instanceof Error ? err.message : String(err)
+        if (errMsg.includes("actNotFound") || errMsg.includes("Account not found")) {
+            return {
+                exists: false,
+                message: "이 주소는 XRPL Testnet에 활성화되지 않았습니다",
+            }
+        }
+        return {
+            exists: false,
+            message: "유효하지 않은 XRPL 주소입니다",
+        }
+    }
 }

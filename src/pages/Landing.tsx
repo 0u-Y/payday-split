@@ -3,21 +3,21 @@ import { Button, Card, Mono } from "../components/ui"
 
 export default function Landing() {
   return (
-    <div className="px-16 pt-14 pb-10">
+    <div className="px-16 pt-20 pb-16">
       {/* Hero — 가운데 정렬 */}
-      <div className="max-w-[720px] mx-auto text-center">
-        <h1 className="text-[56px] leading-[1.05] tracking-[-0.035em] font-extrabold text-ink m-0">
+      <div className="max-w-[900px] mx-auto text-center">
+        <h1 className="text-[80px] leading-[1.05] tracking-[-0.035em] font-extrabold text-ink m-0">
           월급 하나로,
           <br />
           가족 모두에게.
         </h1>
-        <p className="text-[18px] leading-[1.55] text-ink-soft mt-[22px] mb-8 font-medium">
+        <p className="text-[20px] leading-[1.55] text-ink-soft mt-7 mb-10 font-medium">
           한국에서 일하는 외국인 근로자가 본국 가족에게
           <br />
           <strong className="text-ink">한 번의 송금으로</strong> XRPL 위에서 자동 분할.
         </p>
 
-        <div className="flex gap-3 mb-9 justify-center">
+        <div className="flex gap-3 mb-12 justify-center">
           <Link to="/send">
             <Button kind="primary" size="lg">
               송금 시작 →
@@ -25,7 +25,7 @@ export default function Landing() {
           </Link>
         </div>
 
-        <div className="flex gap-8 pt-6 border-t border-line justify-center">
+        <div className="flex gap-12 pt-8 border-t border-line justify-center">
           <Stat top="$0.0001" label="건당 수수료" />
           <Stat top="3.4초" label="평균 정산" />
           <Stat top="vs SWIFT" label="98% 절감" coral />
@@ -66,13 +66,13 @@ function Stat({ top, label, coral }: { top: string; label: string; coral?: boole
   return (
     <div>
       <div
-        className={`text-[22px] font-bold tracking-[-0.02em] tabular-nums ${
+        className={`text-[36px] font-bold tracking-[-0.02em] tabular-nums ${
           coral ? "text-coral" : "text-ink"
         }`}
       >
         {top}
       </div>
-      <div className="text-xs text-ink-mute mt-0.5 font-medium">{label}</div>
+      <div className="text-sm text-ink-mute mt-1 font-medium">{label}</div>
     </div>
   )
 }

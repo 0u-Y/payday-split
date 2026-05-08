@@ -7,6 +7,11 @@ export type Family = {
     country: string
     trustSetTxHash?: string
     registeredAt: number
+    realName?: string
+    kycVerifiedAt?: string       // ISO date
+    kycIssuer?: string
+    did?: string
+    relationVerifiedAt?: string  // ISO date
   }
   
   export type TransactionRecord = {

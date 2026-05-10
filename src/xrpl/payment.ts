@@ -78,7 +78,10 @@ export async function splitPayment(
     recipients: Recipient[],
     totalAmount: number,
 ): Promise<PaymentResult[]> {
-    const totalShare = recipients.reduce((sum, r) => sum + r.sharePercent, 0)
+    // 0% 수신인 제외
+    const activeRecipients = recipients.filter((r) => r.sharePercent > 0)
+
+    const totalShare = activeRecipients.reduce((sum, r) => sum + r.sharePercent, 0)
 
     if (Math.abs(totalShare - 100) > 0.01) {
         throw new Error(`Share percentages must sum to 100, got ${totalShare}`)
@@ -94,7 +97,7 @@ export async function splitPayment(
     }
 
     const trustLineChecks = await Promise.all(
-        recipients.map(async (r) => ({
+        activeRecipients.map(async (r) => ({
             address: r.address,
             hasTrustLine: await hasRLUSDTrustLine(client, r.address),
         })),
@@ -114,7 +117,7 @@ export async function splitPayment(
     })
     const baseSequence = accountInfo.result.account_data.Sequence
 
-    const promises = recipients.map((r, i) => {
+    const promises = activeRecipients.map((r, i) => {
         const amount = ((totalAmount * r.sharePercent) / 100).toFixed(2)
         return sendRLUSD(client, sender, r.address, amount, baseSequence + i)
     })
@@ -125,7 +128,7 @@ export async function splitPayment(
             return r.value
         }
         return {
-            recipient: recipients[i].address,
+            recipient: activeRecipients[i].address,
             amount: "0",
             status: "failed" as const,
             error: r.reason instanceof Error ? r.reason.message : String(r.reason)

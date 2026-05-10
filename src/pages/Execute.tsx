@@ -141,11 +141,13 @@ export default function Execute() {
 
   const railGradient = `linear-gradient(to bottom, var(--color-sage) 0%, var(--color-sage) ${railProgressPct}%, var(--color-line) ${railProgressPct}%)`
 
+  const sentFamilies = families.filter((f) => f.sharePercent > 0)
+
   const subText = hasFailed
-    ? `${fmtKRW(state.salaryKRW)} → 가족 ${families.length}명 · 송금 실패`
+    ? `${fmtKRW(state.salaryKRW)} → 가족 ${sentFamilies.length}명 · 송금 실패`
     : allDone
-      ? `${fmtKRW(state.salaryKRW)} → 가족 ${families.length}명 · 송금 완료`
-      : `${fmtKRW(state.salaryKRW)} → 가족 ${families.length}명 · 분할 송금 진행 중`
+      ? `${fmtKRW(state.salaryKRW)} → 가족 ${sentFamilies.length}명 · 송금 완료`
+      : `${fmtKRW(state.salaryKRW)} → 가족 ${sentFamilies.length}명 · 분할 송금 진행 중`
 
   return (
     <div className="px-14 py-8 max-w-[980px] mx-auto">
@@ -250,7 +252,7 @@ export default function Execute() {
             <div>
               <h2 className="text-lg font-bold text-sage">송금 완료</h2>
               <p className="text-sm text-ink-soft">
-                총 {state.rlusdAmount.toFixed(2)} RLUSD가 가족 {families.length}명에게
+                총 {state.rlusdAmount.toFixed(2)} RLUSD가 가족 {sentFamilies.length}명에게
                 분할 송금되었습니다
               </p>
             </div>

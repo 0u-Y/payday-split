@@ -23,7 +23,7 @@ const MIN_BALANCE = 1
 function Logo() {
   return (
     <Link to="/" className="no-underline text-ink">
-      <span className="font-bold text-base tracking-tight font-kr">Payday Split</span>
+      <span className="font-semibold text-[13px] tracking-tight">Payday Split</span>
     </Link>
   )
 }
@@ -34,6 +34,7 @@ function WalletPill() {
   const location = useLocation()
   const [balance, setBalance] = useState<number | null>(null)
   const [refilling, setRefilling] = useState(false)
+  const [open2, setOpen2] = useState(false)
 
   const fetchBalance = async () => {
     if (!address) return
@@ -108,12 +109,13 @@ function WalletPill() {
   }
 
   const isLow = balance !== null && balance < MIN_BALANCE
-  const isEmpty = balance !== null && balance === 0
 
   return (
-    <div className="flex items-center gap-2">
-      <div
-        className={`flex items-center gap-2 py-1.5 pl-1.5 pr-3 rounded-full border bg-bg-raised ${
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen2((v) => !v)}
+        className={`flex items-center gap-2 py-1.5 pl-1.5 pr-3 rounded-full border bg-bg-raised cursor-pointer ${
           isLow ? "border-red" : "border-line"
         }`}
       >
@@ -125,25 +127,26 @@ function WalletPill() {
         </Mono>
         <span className="w-px h-3 bg-line" />
         {balance === null ? (
-          <Mono size={11} className="text-ink-mute">
-            …
-          </Mono>
+          <Mono size={11} className="text-ink-mute">…</Mono>
         ) : (
           <Mono size={11} className={isLow ? "text-red font-bold" : "text-ink-soft font-semibold"}>
             {balance.toFixed(2)}
             <span className="text-ink-mute font-medium ml-1">RLUSD</span>
           </Mono>
         )}
-      </div>
-      {isEmpty && (
-        <button
-          type="button"
-          onClick={handleRefill}
-          disabled={refilling}
-          className="px-3 py-1.5 rounded-full border border-coral bg-coral text-white text-[11px] font-bold hover:bg-coral-dark hover:border-coral-dark transition disabled:opacity-50 cursor-pointer"
-        >
-          {refilling ? "충전 중…" : "RLUSD 충전"}
-        </button>
+      </button>
+
+      {open2 && (
+        <div className="absolute right-0 top-[calc(100%+6px)] bg-bg-raised border border-line rounded-[10px] shadow-lift py-1 z-50 min-w-[140px]">
+          <button
+            type="button"
+            onClick={() => { setOpen2(false); handleRefill() }}
+            disabled={refilling}
+            className="w-full px-4 py-2 text-left text-[12px] font-semibold text-ink hover:bg-bg-sunken disabled:opacity-50 transition"
+          >
+            {refilling ? "충전 중…" : "RLUSD 충전 +10,000"}
+          </button>
+        </div>
       )}
     </div>
   )

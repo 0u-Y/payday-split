@@ -261,6 +261,12 @@ npx tsx src/scripts/demo.ts          # populate localStorage with sample transac
 npx tsx src/scripts/setup-issuer.ts  # configure issuer trust lines on testnet
 ```
 
+### Refill Sender RLUSD
+```bash
+npm run refill                # refill 10,000 RLUSD (default)
+npm run refill:amount 5000    # refill specific amount
+```
+
 ---
 
 ## Configuration

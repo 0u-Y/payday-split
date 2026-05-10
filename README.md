@@ -1,5 +1,5 @@
 # Payday Split
-**One paycheck. Every family member. One settlement cycle on the XRP Ledger.**
+**Payday Split delivers one paycheck to every family member in a single settlement cycle on the XRP Ledger.**
 
 Live demo: https://payday-split.vercel.app
 

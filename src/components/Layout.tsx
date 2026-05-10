@@ -5,9 +5,12 @@ import { useSender } from "../contexts/SenderContext"
 import { useWalletConnect } from "../contexts/WalletConnectContext"
 import { getClient } from "../xrpl/client"
 import { getRLUSDBalance } from "../xrpl/query"
+import { issueToken } from "../xrpl/issue"
+import { walletFromSeed } from "../xrpl/wallet"
 import { shortAddr } from "../lib/format"
 import { Badge, Mono } from "./ui"
 import { WalletConnectModal } from "./WalletConnectModal"
+import { ISSUER_SEED } from "../config"
 
 const NAV_ITEMS = [
   { path: "/", label: "Home", end: true },
@@ -30,10 +33,24 @@ function WalletPill() {
   const { open } = useWalletConnect()
   const location = useLocation()
   const [balance, setBalance] = useState<number | null>(null)
+  const [refilling, setRefilling] = useState(false)
+
+  const fetchBalance = async () => {
+    if (!address) return
+    const client = await getClient()
+    try {
+      const b = await getRLUSDBalance(client, address)
+      setBalance(b)
+    } catch (err) {
+      console.error("잔고 조회 실패:", err)
+    } finally {
+      await client.disconnect()
+    }
+  }
 
   useEffect(() => {
-    if (!address) return
     let cancelled = false
+    if (!address) return
     ;(async () => {
       const client = await getClient()
       try {
@@ -45,10 +62,24 @@ function WalletPill() {
         await client.disconnect()
       }
     })()
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [address, location.pathname])
+
+  const handleRefill = async () => {
+    if (!address || refilling) return
+    setRefilling(true)
+    const client = await getClient()
+    try {
+      const issuer = walletFromSeed(ISSUER_SEED)
+      await issueToken(client, issuer, address, "10000")
+      await fetchBalance()
+    } catch (err) {
+      console.error("충전 실패:", err)
+    } finally {
+      await client.disconnect()
+      setRefilling(false)
+    }
+  }
 
   // preseeded 모드 미연결 — 지갑 연결 버튼
   if (!isCrossmark && !isWalletConnected) {
@@ -77,29 +108,42 @@ function WalletPill() {
   }
 
   const isLow = balance !== null && balance < MIN_BALANCE
+  const isEmpty = balance !== null && balance === 0
 
   return (
-    <div
-      className={`flex items-center gap-2 py-1.5 pl-1.5 pr-3 rounded-full border bg-bg-raised ${
-        isLow ? "border-red" : "border-line"
-      }`}
-    >
-      <div className="w-[22px] h-[22px] rounded-full bg-ink text-white flex items-center justify-center text-[10px] font-bold">
-        NV
+    <div className="flex items-center gap-2">
+      <div
+        className={`flex items-center gap-2 py-1.5 pl-1.5 pr-3 rounded-full border bg-bg-raised ${
+          isLow ? "border-red" : "border-line"
+        }`}
+      >
+        <div className="w-[22px] h-[22px] rounded-full bg-ink text-white flex items-center justify-center text-[10px] font-bold">
+          NV
+        </div>
+        <Mono size={11} className="text-ink-soft">
+          {shortAddr(address)}
+        </Mono>
+        <span className="w-px h-3 bg-line" />
+        {balance === null ? (
+          <Mono size={11} className="text-ink-mute">
+            …
+          </Mono>
+        ) : (
+          <Mono size={11} className={isLow ? "text-red font-bold" : "text-ink-soft font-semibold"}>
+            {balance.toFixed(2)}
+            <span className="text-ink-mute font-medium ml-1">RLUSD</span>
+          </Mono>
+        )}
       </div>
-      <Mono size={11} className="text-ink-soft">
-        {shortAddr(address)}
-      </Mono>
-      <span className="w-px h-3 bg-line" />
-      {balance === null ? (
-        <Mono size={11} className="text-ink-mute">
-          …
-        </Mono>
-      ) : (
-        <Mono size={11} className={isLow ? "text-red font-bold" : "text-ink-soft font-semibold"}>
-          {balance.toFixed(2)}
-          <span className="text-ink-mute font-medium ml-1">RLUSD</span>
-        </Mono>
+      {isEmpty && (
+        <button
+          type="button"
+          onClick={handleRefill}
+          disabled={refilling}
+          className="px-3 py-1.5 rounded-full border border-coral bg-coral text-white text-[11px] font-bold hover:bg-coral-dark hover:border-coral-dark transition disabled:opacity-50 cursor-pointer"
+        >
+          {refilling ? "충전 중…" : "RLUSD 충전"}
+        </button>
       )}
     </div>
   )

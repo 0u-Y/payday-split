@@ -9,7 +9,7 @@ import { getRLUSDBalance } from "../xrpl/query"
 import type { Family } from "../types"
 import { Avatar, Badge, Button, Card, FlagChip, Mono } from "../components/ui"
 import { FAMILY_PRESET } from "../lib/family"
-import { fmtKRW, shortAddr } from "../lib/format"
+import { fmtKRW, fmtRLUSD, shortAddr } from "../lib/format"
 import { getAISignal, type SignalLevel } from "../lib/aiSignal"
 import { EXCHANGE_RATE_KRW_USD } from "../config"
 
@@ -232,10 +232,10 @@ export default function Send() {
             <div className="text-xs text-ink-soft">환산 후</div>
             <div className="flex items-baseline gap-1.5">
               <Mono size={18} className="font-bold text-ink">
-                {rlusd.toFixed(2)}
+                {fmtRLUSD(rlusd)}
               </Mono>
               <span className="text-[11px] text-ink-mute font-semibold">RLUSD</span>
-              <span className="text-[11px] text-ink-mute ml-2">1 USD = ₩{EXCHANGE_RATE_KRW_USD}</span>
+              <span className="text-[11px] text-ink-mute ml-2">1 USD = ₩{EXCHANGE_RATE_KRW_USD.toLocaleString("ko-KR")}</span>
             </div>
           </div>
         </Card>
@@ -333,10 +333,29 @@ export default function Send() {
           <div className="text-xs text-ink-mute font-bold tracking-[0.06em] mb-3.5">송금 요약</div>
 
           <SummaryRow label="총 보낼 금액" value={fmtKRW(salaryKRW)} bold />
-          <SummaryRow label="환산" value={`${rlusd.toFixed(2)} RLUSD`} mono />
+          <SummaryRow label="환산" value={`= ${fmtRLUSD(rlusd)} RLUSD`} mono />
           <SummaryRow label="수신인" value={`가족 ${families.length}명 · 베트남`} />
 
           <div className="h-px bg-line my-3.5" />
+
+          {/* 잔액 전후 */}
+          <div className="px-3.5 py-3 bg-bg-sunken rounded-[10px] mb-3">
+            <div className="text-[11px] text-ink-mute font-bold tracking-[0.04em] mb-2">내 잔액</div>
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-xs text-ink-soft">송금 전</span>
+              <span className="font-mono text-sm font-bold text-ink">
+                {balance !== null ? `${fmtRLUSD(balance)} RLUSD` : "—"}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-ink-soft">송금 후</span>
+              <span className={`font-mono text-sm font-bold ${
+                balance !== null && balance - rlusd >= 0 ? "text-sage" : "text-coral"
+              }`}>
+                {balance !== null ? `${fmtRLUSD(balance - rlusd)} RLUSD` : "—"}
+              </span>
+            </div>
+          </div>
 
           <div className="flex justify-between mb-1.5">
             <span className="text-xs text-ink-mute">XRPL 네트워크 수수료</span>
@@ -375,10 +394,10 @@ export default function Send() {
             {isLoading
               ? "준비 중…"
               : insufficientBalance
-                ? `잔고 부족 (보유 ${balance?.toFixed(2)}, 필요 ${rlusd.toFixed(2)} RLUSD)`
+                ? `잔고 부족 (보유 ${fmtRLUSD(balance!)}, 필요 ${fmtRLUSD(rlusd)} RLUSD)`
                 : rlusd < MIN_RLUSD
                   ? `최소 ${MIN_RLUSD} RLUSD 이상`
-                  : `${rlusd.toFixed(2)} RLUSD 분할 송금 →`}
+                  : `${fmtRLUSD(rlusd)} RLUSD 분할 송금 →`}
           </Button>
           <div className="text-center text-[11px] text-ink-mute mt-2">
             승인 시 1회 서명으로 {families.length}건 처리

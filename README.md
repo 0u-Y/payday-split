@@ -16,7 +16,16 @@ Payday Split targets all three at once. A worker sets their family split ratios 
 ---
 
 ## Why XRPL
-3–5 second finality. Fees under $0.001 per transaction. And most importantly: delegation, limits, and multi-party settlement are implemented using only protocol-native features — no smart contracts, no additional attack surface, no regulatory gray area.
+
+Remittance infrastructure built on XRPL has three concrete advantages over traditional rails and EVM-based alternatives.
+
+**Speed and cost.** Ledger close time on XRPL averages 3–5 seconds. Transaction fees are under $0.001. A four-recipient batch that would cost $12–50 via SWIFT and take 1–3 business days settles on XRPL in under 10 seconds for a fraction of a cent.
+
+**Protocol-native primitives, no smart contracts.** The features Payday Split needs — token issuance, trust line gating, multi-party payment, and identity anchoring via DID — are all built into the XRPL protocol itself. There is no application-layer smart contract to audit, exploit, or get caught in a regulatory gray area. The attack surface is the base protocol, which has been running in production since 2012.
+
+**RLUSD as the settlement layer.** RLUSD is a regulated USD stablecoin issued by Ripple on XRPL. Using it as the intermediate asset means the corridor is KRW → RLUSD → local currency, with no exposure to XRP price volatility during transit. The trust line model also means a recipient address must explicitly opt in before any token can land — no unsolicited transfers.
+
+**Regulatory posture.** XRPL's architecture is designed to be compliant by default. Trust lines, DID (XLS-40), and Verifiable Credentials give regulators a clear on-chain audit trail for KYC and family relationship verification, without requiring a centralized database that becomes a liability.
 
 ---
 

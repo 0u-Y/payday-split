@@ -31,89 +31,89 @@ export default function Landing() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-60px)] flex flex-col">
+    <div className="min-h-[calc(100vh-60px)] flex flex-col items-center justify-center px-6 py-16">
+      <div className="w-full max-w-[1000px] grid grid-cols-[1.6fr_1px_1fr] gap-0">
 
-      {/* Hero */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pt-20 pb-16 text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-line bg-bg-raised mb-8">
-          <span className="w-1.5 h-1.5 rounded-full bg-sage inline-block" />
-          <span className="text-[11px] font-semibold text-ink-mute tracking-wide">XRPL Testnet · RLUSD</span>
-        </div>
+        {/* LEFT — hero */}
+        <div className="pr-14 flex flex-col justify-center">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-line bg-bg-raised mb-7 self-start">
+            <span className="w-1.5 h-1.5 rounded-full bg-sage inline-block" />
+            <span className="text-[11px] font-semibold text-ink-mute">Korea → VN · PH · TH</span>
+          </div>
 
-        <h1 className="text-[52px] leading-[1.1] tracking-[-0.03em] font-bold text-ink m-0 max-w-[640px]">
-          월급 하나로,<br />본국 가족 모두에게.
-        </h1>
+          <h1 className="text-[42px] leading-[1.12] tracking-[-0.03em] font-bold text-ink m-0 mb-4">
+            Send your salary home.<br />
+            <span className="text-coral">Split. Instant. Free.</span>
+          </h1>
 
-        <p className="text-[15px] leading-[1.7] text-ink-soft mt-5 mb-8 max-w-[480px]">
-          재한 외국인 근로자가 매월 보내는 송금을 XRPL 위에서
-          단일 정산 사이클로 처리합니다. 수수료 사실상 0%, 정산 3초.
-        </p>
-
-        <div className="flex items-center gap-3 mb-4">
-          {showCrossmarkConnectButton ? (
-            <Button kind="primary" size="lg" onClick={handleCrossmarkConnect} disabled={connecting}>
-              {connecting ? "연결 중…" : "Crossmark로 시작 →"}
-            </Button>
-          ) : !isCrossmark && !isWalletConnected ? (
-            <Button kind="primary" size="lg" onClick={handleStartSendFromUnconnected}>
-              송금 시작 →
-            </Button>
-          ) : (
-            <Link to="/send">
-              <Button kind="primary" size="lg">송금 시작 →</Button>
-            </Link>
-          )}
-        </div>
-
-        {error && <div className="text-xs text-red font-semibold">{error}</div>}
-
-        {/* Stats */}
-        <div className="flex items-center gap-8 mt-10 pt-8 border-t border-line">
-          <Stat value="$0.0001" label="건당 수수료" />
-          <div className="w-px h-8 bg-line" />
-          <Stat value="3.4초" label="평균 정산" />
-          <div className="w-px h-8 bg-line" />
-          <Stat value="98%" label="vs SWIFT 절감" coral />
-        </div>
-      </div>
-
-      {/* How it works */}
-      <div className="border-t border-line bg-bg-raised px-8 py-10">
-        <div className="max-w-[860px] mx-auto">
-          <p className="text-[10px] font-bold tracking-[0.12em] text-ink-mute mb-6 uppercase">
-            How it works
+          <p className="text-[14px] leading-[1.75] text-ink-soft mb-8">
+            Set your family's share once.<br />
+            Every payday, everyone gets paid — at the same time.
           </p>
-          <div className="grid grid-cols-3 gap-4">
-            <HowStep
-              n="01"
-              title="한국 온램프"
-              sub="토스뱅크 → RLUSD"
-              detail="월급 KRW를 스테이블코인으로 환전"
-            />
-            <HowStep
-              n="02"
-              title="XRPL 1:N 분할"
-              sub="단일 정산 사이클"
-              detail="가족 비율대로 병렬 Payment 트랜잭션"
-            />
-            <HowStep
-              n="03"
-              title="현지 오프램프"
-              sub="VND / PHP / THB"
-              detail="가족이 즉시 현지 e-wallet으로 수령"
-            />
+
+          <div className="flex flex-col gap-3">
+            {showCrossmarkConnectButton ? (
+              <Button kind="primary" size="lg" onClick={handleCrossmarkConnect} disabled={connecting}>
+                {connecting ? "연결 중…" : "Crossmark로 시작 →"}
+              </Button>
+            ) : !isCrossmark && !isWalletConnected ? (
+              <Button kind="primary" size="lg" onClick={handleStartSendFromUnconnected}>
+                송금 시작 →
+              </Button>
+            ) : (
+              <Link to="/send">
+                <Button kind="primary" size="lg">송금 시작 →</Button>
+              </Link>
+            )}
+            {error && <p className="text-xs text-red font-semibold">{error}</p>}
+          </div>
+
+          <div className="flex items-center gap-6 mt-10 pt-8 border-t border-line">
+            <Stat value="$0.0001" label="건당 수수료" />
+            <div className="w-px h-7 bg-line" />
+            <Stat value="3~5초" label="평균 정산" />
+            <div className="w-px h-7 bg-line" />
+            <Stat value="98%" label="vs SWIFT 절감" coral />
           </div>
         </div>
-      </div>
 
+        {/* Divider */}
+        <div className="bg-line mx-0" />
+
+        {/* RIGHT — how it works */}
+        <div className="pl-14 flex flex-col justify-center gap-8">
+          <p className="text-[10px] font-bold tracking-[0.12em] text-ink-mute uppercase">
+            How it works
+          </p>
+          <HowStep
+            n="01"
+            title="Korea On-ramp"
+            sub="토스뱅크 → RLUSD"
+            detail="KRW 급여를 RLUSD로 환전. 소액해외송금업 파트너 경유."
+          />
+          <HowStep
+            n="02"
+            title="1:N Split on XRPL"
+            sub="One signature, all recipients"
+            detail="가족별 비율대로 Payment 트랜잭션 병렬 제출. 3~5초 내 전원 확정."
+          />
+          <HowStep
+            n="03"
+            title="Local Cash-out"
+            sub="VND / PHP / THB"
+            detail="현지 e-wallet으로 즉시 입금. 가족이 별도 환전 없이 바로 사용."
+          />
+        </div>
+
+      </div>
     </div>
   )
 }
 
 function Stat({ value, label, coral }: { value: string; label: string; coral?: boolean }) {
   return (
-    <div className="text-center">
-      <div className={`text-[26px] font-bold tracking-[-0.02em] tabular-nums ${coral ? "text-coral" : "text-ink"}`}>
+    <div>
+      <div className={`text-[22px] font-bold tracking-[-0.02em] tabular-nums ${coral ? "text-coral" : "text-ink"}`}>
         {value}
       </div>
       <div className="text-[11px] text-ink-mute mt-0.5 font-medium">{label}</div>

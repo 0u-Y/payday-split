@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react"
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom"
+import { Wallet } from "lucide-react"
 import { useSender } from "../contexts/SenderContext"
+import { useWalletConnect } from "../contexts/WalletConnectContext"
 import { getClient } from "../xrpl/client"
 import { getRLUSDBalance } from "../xrpl/query"
 import { shortAddr } from "../lib/format"
 import { Badge, Mono } from "./ui"
+import { WalletConnectModal } from "./WalletConnectModal"
 
 const NAV_ITEMS = [
   { path: "/", label: "Home", end: true },
@@ -23,7 +26,8 @@ function Logo() {
 }
 
 function WalletPill() {
-  const { address, isReady } = useSender()
+  const { address, isReady, isCrossmark, isWalletConnected } = useSender()
+  const { open } = useWalletConnect()
   const location = useLocation()
   const [balance, setBalance] = useState<number | null>(null)
 
@@ -46,12 +50,27 @@ function WalletPill() {
     }
   }, [address, location.pathname])
 
+  // preseeded 모드 미연결 — 지갑 연결 버튼
+  if (!isCrossmark && !isWalletConnected) {
+    return (
+      <button
+        type="button"
+        onClick={() => open()}
+        className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-coral bg-coral text-white hover:bg-coral-dark hover:border-coral-dark transition cursor-pointer active:scale-[0.98]"
+      >
+        <Wallet size={14} />
+        <span className="text-[12px] font-bold tracking-tight">지갑 연결</span>
+      </button>
+    )
+  }
+
   if (!isReady || !address) {
+    const label = isCrossmark ? "Crossmark 미연결" : "셋업 중…"
     return (
       <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-line bg-bg-raised">
         <span className="w-1.5 h-1.5 rounded-full bg-amber animate-pulse-dot" />
         <Mono size={11} className="text-ink-mute">
-          셋업 중…
+          {label}
         </Mono>
       </div>
     )
@@ -119,6 +138,8 @@ export default function Layout() {
       <main>
         <Outlet />
       </main>
+
+      <WalletConnectModal />
     </div>
   )
 }

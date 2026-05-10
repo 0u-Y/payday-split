@@ -80,13 +80,22 @@ function fmtSavingsKRW(n: number): string {
 
 export default function Send() {
   const navigate = useNavigate()
-  const { address, isReady, isFirstTime } = useSender()
+  const { address, isReady, isFirstTime, isCrossmark, isWalletConnected } = useSender()
 
   const [families, setFamilies] = useState<Family[]>([])
   const [setupStep, setSetupStep] = useState<string>("")
   const [salaryKRW, setSalaryKRW] = useState<number>(3_000_000)
   const [balance, setBalance] = useState<number | null>(null)
   const setupStartedRef = useRef(false)
+
+  // 미연결 상태로 직접 /send 진입하면 랜딩으로 돌려보냄
+  useEffect(() => {
+    if (isCrossmark && !address) {
+      navigate("/", { replace: true })
+    } else if (!isCrossmark && !isWalletConnected) {
+      navigate("/", { replace: true })
+    }
+  }, [isCrossmark, address, isWalletConnected, navigate])
 
   // 가족 셋업
   useEffect(() => {

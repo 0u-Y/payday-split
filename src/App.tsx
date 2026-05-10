@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import Layout from "./components/Layout"
 import { SenderProvider } from "./contexts/SenderContext"
+import { WalletConnectProvider } from "./contexts/WalletConnectContext"
 import Landing from "./pages/Landing"
 import Send from "./pages/Send"
 import Execute from "./pages/Execute"
@@ -12,16 +13,18 @@ export default function App() {
   return (
     <BrowserRouter>
       <SenderProvider>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route path="/" element={<Landing />} />
-            <Route path="/send" element={<Send />} />
-            <Route path="/execute" element={<Execute />} />
-            <Route path="/recipient/:addr" element={<Recipient />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/family/new" element={<FamilyNew />} />
-          </Route>
-        </Routes>
+        <WalletConnectProvider>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route path="/" element={<Landing />} />
+              <Route path="/send" element={<Send />} />
+              <Route path="/execute" element={<Execute />} />
+              <Route path="/recipient/:addr" element={<Recipient />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/family/new" element={<FamilyNew />} />
+            </Route>
+          </Routes>
+        </WalletConnectProvider>
       </SenderProvider>
     </BrowserRouter>
   )

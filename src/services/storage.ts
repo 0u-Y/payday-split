@@ -7,6 +7,7 @@ const KEYS = {
   SENDER: "payday-split:sender",
   FAMILIES: "payday-split:families",
   TRANSACTIONS: "payday-split:transactions",
+  WALLET_CONNECTED: "payday-split:wallet-connected",
 } as const
 
 // =========================================
@@ -23,6 +24,18 @@ export function setSender(sender: SenderInfo): void {
 
 export function clearSender(): void {
   localStorage.removeItem(KEYS.SENDER)
+}
+
+// =========================================
+// Wallet Connected (시뮬레이션 플래그)
+// =========================================
+export function getWalletConnected(): boolean {
+  return localStorage.getItem(KEYS.WALLET_CONNECTED) === "true"
+}
+
+export function setWalletConnected(v: boolean): void {
+  if (v) localStorage.setItem(KEYS.WALLET_CONNECTED, "true")
+  else localStorage.removeItem(KEYS.WALLET_CONNECTED)
 }
 
 // =========================================
@@ -84,4 +97,5 @@ export function clearAll(): void {
   localStorage.removeItem(KEYS.SENDER)
   localStorage.removeItem(KEYS.FAMILIES)
   localStorage.removeItem(KEYS.TRANSACTIONS)
+  localStorage.removeItem(KEYS.WALLET_CONNECTED)
 }

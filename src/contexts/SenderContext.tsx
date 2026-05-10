@@ -6,7 +6,6 @@ import {
   type ReactNode,
 } from "react"
 import { Wallet } from "xrpl"
-import sdk from "@crossmarkio/sdk"
 import {
   getSender,
   setSender,
@@ -19,7 +18,6 @@ import {
   setWalletConnected,
 } from "../services/storage"
 import { walletFromSeed } from "../xrpl/wallet"
-import { USE_CROSSMARK } from "../config"
 import {
   PRESEEDED_SENDER,
   PRESEEDED_FAMILY_REGISTERED,
@@ -28,15 +26,15 @@ import {
 } from "../data/preseeded"
 
 type SenderContextValue = {
-  wallet: Wallet | null         // Crossmark 모드면 항상 null (외부 지갑이 서명)
+  wallet: Wallet | null
   address: string | null
   isReady: boolean              // 송금자 사용 가능 (지갑 연결 후 true)
   isFirstTime: boolean
-  isCrossmark: boolean          // 빌드 토글 결과
-  isWalletConnected: boolean    // 시뮬레이션 플래그 (preseeded 모드에서만 의미)
+  isCrossmark: boolean          // 항상 false (Crossmark 코드패스 제거됨, 소비자 호환용)
+  isWalletConnected: boolean    // 시뮬레이션 플래그
   connectWallet: () => void     // 시뮬레이션 — preseeded 송금자 박고 isReady=true
-  disconnectWallet: () => void  // 시뮬레이션 — sender 제거하고 isReady=false
-  connectCrossmark: () => Promise<void>  // preseeded 모드에선 throw
+  disconnectWallet: () => void
+  connectCrossmark: () => Promise<void>  // 호환용 throw
   disconnectCrossmark: () => void
 }
 
@@ -58,7 +56,6 @@ const SenderContext = createContext<SenderContextValue>({
   disconnectCrossmark: noop,
 })
 
-// 가족·거래 preseeding은 두 모드 공통.
 function ensureFamilyAndTxPreseeded(): void {
   if (getFamilies().length === 0) {
     for (const p of PRESEEDED_FAMILY_REGISTERED) addFamily(toFamily(p))
@@ -80,7 +77,6 @@ function ensurePreseededSender(): { wallet: Wallet; isFirstTime: boolean } {
       walletAddress: PRESEEDED_SENDER.address,
       walletSeed: PRESEEDED_SENDER.seed,
       createdAt: Date.now(),
-      source: "preseeded",
     })
     stored = getSender()!
   }
@@ -91,7 +87,7 @@ function ensurePreseededSender(): { wallet: Wallet; isFirstTime: boolean } {
   }
 }
 
-function PreseededSenderProvider({ children }: { children: ReactNode }) {
+export function SenderProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState(() => {
     ensureFamilyAndTxPreseeded()
     const connected = getWalletConnected()
@@ -131,66 +127,6 @@ function PreseededSenderProvider({ children }: { children: ReactNode }) {
     >
       {children}
     </SenderContext.Provider>
-  )
-}
-
-function CrossmarkSenderProvider({ children }: { children: ReactNode }) {
-  const [address, setAddress] = useState<string | null>(() => {
-    ensureFamilyAndTxPreseeded()
-    const stored = getSender()
-    // 이전 세션에서 Crossmark로 연결한 적이 있으면 주소 복원
-    return stored?.source === "crossmark" ? stored.walletAddress : null
-  })
-  const [isFirstTime] = useState(() => !getSender())
-
-  const connectCrossmark = useCallback(async () => {
-    const resp = await sdk.async.signInAndWait()
-    // 응답 우선, 폴백으로 SDK 메서드
-    const respAddr =
-      (resp as unknown as { response?: { data?: { address?: string } } })
-        ?.response?.data?.address
-    const addr = respAddr ?? sdk.methods.getAddress()
-    if (!addr) throw new Error("Crossmark 주소를 받지 못했습니다")
-    setSender({
-      walletAddress: addr,
-      createdAt: Date.now(),
-      source: "crossmark",
-    })
-    setAddress(addr)
-  }, [])
-
-  const disconnectCrossmark = useCallback(() => {
-    setAddress(null)
-    // localStorage sender도 제거. 가족·거래는 유지.
-    localStorage.removeItem("payday-split:sender")
-  }, [])
-
-  return (
-    <SenderContext.Provider
-      value={{
-        wallet: null,
-        address,
-        isReady: !!address,
-        isFirstTime,
-        isCrossmark: true,
-        isWalletConnected: !!address,
-        connectWallet: noop,
-        disconnectWallet: noop,
-        connectCrossmark,
-        disconnectCrossmark,
-      }}
-    >
-      {children}
-    </SenderContext.Provider>
-  )
-}
-
-export function SenderProvider({ children }: { children: ReactNode }) {
-  // USE_CROSSMARK는 빌드타임 상수 — 한 빌드 내에선 hooks 순서 안정.
-  return USE_CROSSMARK ? (
-    <CrossmarkSenderProvider>{children}</CrossmarkSenderProvider>
-  ) : (
-    <PreseededSenderProvider>{children}</PreseededSenderProvider>
   )
 }
 
